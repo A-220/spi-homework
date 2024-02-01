@@ -14,18 +14,17 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class XmlParserProvider implements FileParserServices {
+public class XmlParserProvider<T> implements FileParserServices<T> {
     public static final String XML = ".xml";
 
     @Override
-    public List<Map<String, String>> parse(File file) {
-        List<Map<String, String>> peopleList = new ArrayList<>();
+    public List<T> parse(File file, Class<T> clazz) {
+        List<T> result = new ArrayList<>();
+
         try {
             DocumentBuilderFactory factory =
                     DocumentBuilderFactory.newInstance();
@@ -35,27 +34,40 @@ public class XmlParserProvider implements FileParserServices {
             Document doc = builder.parse(new ByteArrayInputStream(xmlString.getBytes(StandardCharsets.UTF_8)));
             doc.getDocumentElement().normalize();
 
-            NodeList nodeList = doc.getElementsByTagName("person");
+            String[] cash = clazz.getName().toLowerCase().split("\\.");
+            String name = cash[cash.length - 1];
+
+            NodeList nodeList = doc.getElementsByTagName(name);
+
             for (int i = 0; i < nodeList.getLength(); i++) {
+                T obj = clazz.newInstance();
                 Node node = nodeList.item(i);
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element element = (Element) node;
-                    Map<String, String> personMap = new HashMap<>();
-                    personMap.put("name", element.getElementsByTagName("name").item(0).getTextContent());
-                    personMap.put("age", element.getElementsByTagName("age").item(0).getTextContent());
-                    personMap.put("email", element.getElementsByTagName("email").item(0).getTextContent());
-                    peopleList.add(personMap);
+                    for (Field field : clazz.getDeclaredFields()) {
+                        field.setAccessible(true);
+                        try {
+                            field.set(obj, element.getElementsByTagName(field.getName()).item(0).getTextContent());
+                            // TODO: 2/1/2024 add method to set any type of fields
+                        } catch (IllegalArgumentException e) {
+                            throw new UnsupportedOperationException("Type " + field.getType().getName() + " is not provided right now !");
+                        }
+                    }
+                    result.add(obj);
                 }
             }
-        } catch (ParserConfigurationException | IOException | SAXException e) {
+        } catch (ParserConfigurationException | IOException | SAXException |
+                 IllegalAccessException | InstantiationException e) {
             System.out.println(e.getMessage());
             e.getStackTrace();
         }
-        return peopleList;
+        return result;
     }
 
     @Override
     public Boolean isProvided(File file) {
         return file.getName().toLowerCase().endsWith(XML);
     }
+
+
 }

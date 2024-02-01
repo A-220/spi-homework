@@ -1,11 +1,11 @@
 package org.example;
 
+import org.example.entity.Person;
 import org.example.interfaces.FileParserServices;
 import org.example.utils.FilePathUtil;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
 
 public class App {
@@ -16,12 +16,12 @@ public class App {
         File jsonFile = FilePathUtil.getFile(".json");
         File csvFile = FilePathUtil.getFile(".csv");
 
-        FileParserServices fpp = getInstance(csvFile);
+        FileParserServices<Person> fpp = getInstance(jsonFile);
         if (fpp == null) {
             throw new UnsupportedOperationException("File with this type not provided right now!");
         }
-        List<Map<String, String>> res = fpp.parse(csvFile);
-        System.out.println(res);
+        List<Person> p = fpp.parse(jsonFile, Person.class);
+        p.forEach(System.out::println);
     }
 
     public static FileParserServices getInstance(File file) {

@@ -2,10 +2,9 @@ package org.example.interfaces;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
-public interface FileParserServices {
-    List<Map<String, String>> parse(File file);
+public interface FileParserServices<T> {
+    List<T> parse(File file, Class<T> clazz);
     Boolean isProvided(File file);
 
 }

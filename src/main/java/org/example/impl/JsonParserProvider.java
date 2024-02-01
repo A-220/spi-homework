@@ -8,17 +8,15 @@ import org.example.utils.FileReaderUtil;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 
-public class JsonParserProvider implements FileParserServices {
+public class JsonParserProvider<T> implements FileParserServices<T> {
     public static final String JSON = ".json";
 
     @Override
-    public List<Map<String, String>> parse(File file) {
+    public List<T> parse(File file, Class<T> clazz) {
         String jsonInput = FileReaderUtil.readAllLinesFromFile(file);
 
-        Type listType = new TypeToken<List<Map<String, String>>>() {
-        }.getType();
+        Type listType = TypeToken.getParameterized(List.class, clazz).getType();
 
         return new Gson().fromJson(jsonInput, listType);
     }
