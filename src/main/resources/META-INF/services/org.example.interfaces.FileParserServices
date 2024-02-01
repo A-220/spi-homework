@@ -1,0 +1,3 @@
+org.example.impl.CsvParserProvider
+org.example.impl.JsonParserProvider
+org.example.impl.XmlParserProvider
